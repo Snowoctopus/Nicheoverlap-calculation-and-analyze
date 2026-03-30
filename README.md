@@ -1,24 +1,34 @@
 # Niche overlap calculation
---> nicheoverlap.R is for the calculation of nicheoverlap
 
---> Running on Rstudio+R
+`nicheoverlap.R` is used for the calculation of niche overlap.
 
---> Prepare data files: Use Matlab to produce the Depth+Phyto+AOA.txt file [writematrix(trab, 'trab.txt')]
-    Data arrangement: 
-    1st column-Depth; 2nd column-AOA abundance; 3th column-Phyto abundance 
-    if use time-series data (e.g. k days)
-    1st column-Depth; 2~k/2+1 column-AOA abundance; k/2+2~k+1 column Phyto abundance
+### Environment
+* **Platform:** RStudio / R
 
--->Running command:
-    source ('path/nicheoverlap.R') % load the function 
-    trab <- read.table('path/trab.txt', sep=",", header=FALSE) % load the depth and abundance data in csv. file
-    trab <- as.matrix(trab)
-    NO <- nicheoverlap(trab)
+### Data Preparation
+1.  **Generate data:** Use Matlab to produce the `Depth+Phyto+AOA.txt` file.
+    ```matlab
+    writematrix(trab, 'trab.txt')
+    ```
+2.  **Data arrangement:**
+    
+| Format | 1st Column | 2nd to X Column | X+1 to End Column |
+| :--- | :--- | :--- | :--- |
+| **Standard** | Depth | AOA abundance | Phyto abundance |
+| **Time-series (k days)** | Depth | AOA (2 ~ k/2+1) | Phyto (k/2+2 ~ k+1) |
 
---> Output:
-    Nicheoverlap figure
-    Nicheoverlap value recorded in the file defined by the 'sink' command
-  
+---
 
-# FigurePlot_for-autotrophy-niche-analyze
-These codes are designed for plotting figure in my submission paper about autotroph niche analyze
+### Running Commands
+In your R console, run the following:
+
+```r
+# 1. Load the function
+source('path/nicheoverlap.R') 
+
+# 2. Load the depth and abundance data (csv format)
+trab <- read.table('path/trab.txt', sep=",", header=FALSE) 
+
+# 3. Convert to matrix and calculate
+trab <- as.matrix(trab)
+NO <- nicheoverlap(trab)
