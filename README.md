@@ -6,7 +6,7 @@
 * **Platform:** RStudio / R
 
 ### Data Preparation
-1.  **Generate data:** Use Matlab to produce the `Depth+Phyto+AOA.txt` file.
+1.  **Generate data:** Use Matlab to produce the `trab.txt` file.
     ```matlab
     writematrix(trab, 'trab.txt')
     ```
