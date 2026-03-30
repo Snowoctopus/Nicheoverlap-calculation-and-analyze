@@ -32,3 +32,16 @@ trab <- read.table('path/trab.txt', sep=",", header=FALSE)
 # 3. Convert to matrix and calculate
 trab <- as.matrix(trab)
 NO <- nicheoverlap(trab)
+
+If need to analyze the time series data, run the following:
+
+```r
+# 1. Load the function
+source('path/nicheoverlap.R')
+
+# 2. Load the depth and abundance data (csv format)
+trab <- read.table('path/trab.txt', sep=",", header=FALSE)
+
+# 3. Convert to matrix and calculate
+trab <- as.matrix(trab)
+for (i in 1:k) {test<-nicheoverlap(trab[,c(1,i+1,i+k+1)],colorsN = c("#FF570A","#FF570A")); title(main="NO_AOO|SP")}
