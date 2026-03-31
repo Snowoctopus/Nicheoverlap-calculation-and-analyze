@@ -48,3 +48,8 @@ for (i in 1:k) {test<-nicheoverlap(trab[,c(1,i+1,i+k+1)],colorsN = c("#FF570A","
 To calculate the error of niche overlap based on Obs. data, use the Bootstrap uncertainty cal method, run the R script in R console:
 Nok seasonal bootstrap.R
 
+# FigurePlot_for-autotrophy-niche-analyze
+
+`Time lagged GAM.R` is used for the phase analyze of niche overlap and other factors
+These codes are designed for plotting figure in my submission paper about autotroph niche analyze
+
