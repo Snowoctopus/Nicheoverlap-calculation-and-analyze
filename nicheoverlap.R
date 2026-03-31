@@ -20,8 +20,9 @@
 #         - if graph=T, each species niche have its own color, their overlap being shaded by lines          #
 #                                                                                                           #
 #############################################################################################################
-#record any print results
-sink("C:/Paper and funding/2024 Autotrophy niche/Submission versions/Text/submission records/20251016 Revised for NC comments/Evolution data compilation/NO_0329.txt",append=TRUE, split=TRUE)
+#record any print results, this is where the running results saved, chose the location whereever you like
+sink("your path/NO.txt",append=TRUE, split=TRUE)
+
 nicheoverlap<-function(trab,graph=T,colorsN=NA) {
   # data extraction and checking
   # traits values
