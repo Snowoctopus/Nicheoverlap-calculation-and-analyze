@@ -35,7 +35,6 @@ NO <- nicheoverlap(trab)
 
 If need to analyze the time series data, run the following:
 
-```r
 # 1. Load the function
 source('path/nicheoverlap.R')
 
@@ -45,3 +44,7 @@ trab <- read.table('path/trab.txt', sep=",", header=FALSE)
 # 3. Convert to matrix and calculate
 trab <- as.matrix(trab)
 for (i in 1:k) {test<-nicheoverlap(trab[,c(1,i+1,i+k+1)],colorsN = c("#FF570A","#FF570A")); title(main="NO_AOO|SP")}
+
+To calculate the error of niche overlap based on Obs. data, use the Bootstrap uncertainty cal method, run the R script in R console:
+Nok seasonal bootstrap.R
+
