@@ -1,28 +1,29 @@
 # ============================================================
-# Bootstrap uncertainty for seasonal NOK (Mouillot et al. 2005)
+# Bootstrap uncertainty for seasonal NOK 
+# Niche overlap calculation is based on Mouillot et al. 2005
 #
-# 方法：对每个标准层的原始观测值有放回重采样
-#       每次重采样后重新计算层均值，传入nicheoverlap核心函数
-#       重复N_BOOT次，取SD和95% CI
+# Method：Resample the original observations for each standard layer with replacement.
+#         Recalculate the layer mean after each resampling iteration and pass it to the nicheoverlap core function.
+#         Repeat for N_BOOT iterations to calculate the Standard Deviation (SD) and 95% Confidence Interval (CI).
 #
-# 输入：AOA Group A 和 Prochlorococcus 原始数据
-# 输出：四个季节的 NOK point estimate + bootstrap SD + 95% CI
+# Input：AOA Group A 和 Prochlorococcus Original observed data
+# Output：NOK point estimate + bootstrap SD + 95% CI in diferent seasons
 # ============================================================
 
 library(readxl)
 
-# ── 文件路径（修改为你本地路径）──────────────────────────────
-PATH_AOA <- "C:/Paper and funding/2024 Autotrophy niche/Submission versions/Text/submission records/20251016 Revised for NC comments/Evolution data compilation/HOT_AmoA_gene_abundances_1692386884939.xlsx"
-PATH_HOT <- "C:/Paper and funding/2024 Autotrophy niche/Submission versions/Text/submission records/20251016 Revised for NC comments/Evolution data compilation/HOT_2013-2019 processed.xlsx"
+# ── File path（change to your own path）──────────────────────────────
+PATH_AOA <- "your path/HOT_AmoA_gene_abundances_1692386884939.xlsx"
+PATH_HOT <- "your path/HOT_2013-2019 processed.xlsx"
 
-N_BOOT <- 1000   # bootstrap次数，可改为2000提高精度
+N_BOOT <- 1000   # Increase bootstrap replicates to 2000 to improve statistical precision
 set.seed(42)
 
-# ── 共同标准层（去掉200m：Pro在200m无观测）───────────────────
+# ── Snap to standard depths (delete 200m, no obs data of Pro in this layer) ───────────────────
 STD_DEPTHS <- c(5, 25, 45, 75, 100, 125, 150, 175)
 
 # ════════════════════════════════════════════════════════════
-# 辅助函数
+# Helper Functions
 # ════════════════════════════════════════════════════════════
 get_season <- function(month) {
   if (month %in% c(12, 1, 2)) return("Winter")
@@ -42,11 +43,12 @@ snap_to_std <- function(press,
 }
 
 # ════════════════════════════════════════════════════════════
-# nicheoverlap 核心函数
-# 完全复现 Mouillot et al. 2005 的 KDE 逻辑：
-#   1. 相对丰度 × 1000 取整 → 展开成样本向量
-#   2. Silverman bandwidth → gaussian KDE（1024点）
-#   3. spline 积分校正 → 两曲线最小值积分 = NOK
+# nicheoverlap Core Function
+# reproduces the Kernel Density Estimation (KDE) logic described by Mouillot et al. (2005):
+#   1. Data Expansion: Transforms relative abundance into a sample vector by multiplying by 1000 and rounding to the nearest integer.
+#   2. Kernel Density Estimation: Applies a Gaussian KDE using Silverman’s Rule of Thumb for bandwidth selection (evaluated at 1024 points).
+#   3. Integration & Overlap (NOK): Performs Spline Interpolation for integration correction. 
+#      The final niche overlap value NOK is calculated as the area under the intersection of the two density curves.
 # ════════════════════════════════════════════════════════════
 nicheoverlap_core <- function(trab) {
   tr  <- trab[, 1]
@@ -80,7 +82,7 @@ nicheoverlap_core <- function(trab) {
   x     <- dens_list[[1]][, 1]
   densN <- sapply(dens_list, function(d) d[, 2])
   
-  # 积分校正：使每条曲线在 [min(tr), max(tr)] 上积分 = 1
+  # Integral Normalization: Ensures that each probability density curve integrates to 1 over the interval [min(tr), max(tr)].
   densNcorr <- densN
   for (i in 1:N) {
     f    <- splinefun(x, densN[, i])
@@ -103,9 +105,9 @@ nicheoverlap_core <- function(trab) {
 }
 
 # ════════════════════════════════════════════════════════════
-# 1. 加载 AOA Group A 原始数据
+# 1. Upload AOA Group A
 # ════════════════════════════════════════════════════════════
-cat("加载 AOA 数据...\n")
+cat("uploading AOA ...\n")
 df_aoa <- read_excel(PATH_AOA, sheet = "data")
 df_aoa$month    <- as.integer(format(as.POSIXct(df_aoa$time), "%m"))
 df_aoa$season   <- sapply(df_aoa$month, get_season)
@@ -115,13 +117,13 @@ df_aoa$AOA_A    <- ifelse(as.integer(df_aoa$AmoA_GrpA_flag) == 0,
 df_aoa <- df_aoa[!is.na(df_aoa$depth_std) & df_aoa$depth_std <= 200, ]
 
 # ════════════════════════════════════════════════════════════
-# 2. 加载 Prochlorococcus 原始数据
+# 2. Upload Prochlorococcus
 # ════════════════════════════════════════════════════════════
-cat("加载 Pro 数据...\n")
+cat("uploading Pro ...\n")
 df_raw <- read_excel(PATH_HOT, sheet = "Sheet1", col_names = FALSE)
 colnames(df_raw) <- c("date","time","press","Nitrate","LLN",
                       "HetBact","Pro","Syn","Euk")
-df_raw <- df_raw[3:nrow(df_raw), ]   # 跳过列名行和单位行
+df_raw <- df_raw[3:nrow(df_raw), ]   # Skip the header row (column names) and the units row
 
 df_raw$press <- as.numeric(df_raw$press)
 df_raw$Pro   <- as.numeric(df_raw$Pro)
@@ -130,14 +132,14 @@ df_raw$date_str <- formatC(as.integer(df_raw$date), width = 6, flag = "0")
 df_raw$month    <- as.integer(substr(df_raw$date_str, 1, 2))
 df_raw$season   <- sapply(df_raw$month, get_season)
 df_raw$depth    <- df_raw$press
-df_raw$Pro[!is.na(df_raw$Pro) & df_raw$Pro == -9] <- NA   # 缺失值标记
+df_raw$Pro[!is.na(df_raw$Pro) & df_raw$Pro == -9] <- NA   # mark the missing value
 
 df_hot <- df_raw[!is.na(df_raw$depth) &
                    df_raw$depth > 0 &
                    df_raw$depth <= 200, ]
 
 # ════════════════════════════════════════════════════════════
-# 3. 逐季节：point estimate + bootstrap
+# 3. Each season：point estimate + bootstrap
 # ════════════════════════════════════════════════════════════
 SEASONS <- c("Winter", "Spring", "Summer", "Fall")
 results <- data.frame(
@@ -151,9 +153,9 @@ results <- data.frame(
 )
 
 for (s in SEASONS) {
-  cat("\n══ 季节:", s, "══\n")
+  cat("\n══ Season:", s, "══\n")
   
-  # 各层原始观测值
+  # Original obs value in each layer
   sub_aoa <- df_aoa[df_aoa$season == s &
                       df_aoa$depth_std %in% STD_DEPTHS, ]
   sub_pro <- df_hot[df_hot$season == s, ]
@@ -167,7 +169,7 @@ for (s in SEASONS) {
     v[!is.na(v)]
   })
   
-  # Point estimate（季节均值）
+  # Point estimate（seasonal mean）
   aoa_mean <- sapply(aoa_obs, function(x) if (length(x) > 0) mean(x) else NA)
   pro_mean <- sapply(pro_obs, function(x) if (length(x) > 0) mean(x) else NA)
   valid    <- !is.na(aoa_mean) & !is.na(pro_mean)
@@ -206,7 +208,7 @@ for (s in SEASONS) {
   cat("  Bootstrap SD =", round(nok_sd * 100, 1), "%\n")
   cat("  95% CI = [", round(ci_lo * 100, 1), "%,",
       round(ci_hi * 100, 1), "%]\n")
-  cat("  有效bootstrap次数:", length(nok_valid), "/", N_BOOT, "\n")
+  cat("  effective times of bootstrap:", length(nok_valid), "/", N_BOOT, "\n")
   
   results <- rbind(results, data.frame(
     Season       = s,
@@ -219,12 +221,12 @@ for (s in SEASONS) {
 }
 
 # ════════════════════════════════════════════════════════════
-# 4. 输出结果
+# 4. Output
 # ════════════════════════════════════════════════════════════
 cat("\n\n══════════════════════════════════════════════════\n")
-cat("季节性 NOK 结果汇总 (Group A vs Prochlorococcus)\n")
+cat("Summary of seasonal NOK (Group A vs Prochlorococcus)\n")
 cat("══════════════════════════════════════════════════\n")
 print(results)
 
 write.csv(results, "NOK_seasonal_bootstrap_results.csv", row.names = FALSE)
-cat("\n结果已保存至 NOK_seasonal_bootstrap_results.csv\n")
+cat("\nresults are saved in NOK_seasonal_bootstrap_results.csv\n")
